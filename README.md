@@ -1,4 +1,4 @@
-# 作業系統專題：StarCraft： brood war AI #
+# 作業研究專題：StarCraft： brood war AI #
 
 ### kai7ai.py ###
 這份 module 會被 `pybw.py` import 進來。  
