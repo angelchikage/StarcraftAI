@@ -9,7 +9,7 @@ class zerg_FastBreakAI(object):
 
     def onConnect(self):
         # Get the game instance
-        self.game = getGame() 
+        self.game = getGame()
 
     def onMatchStart(self):
         if self.game.isReplay:
@@ -40,27 +40,27 @@ class zerg_FastBreakAI(object):
         # drawUnits , wait for drawing
         self.drawUnits = []
 
-        myoverlord = [u for u in self.me.units if u.type.name == 'Zerg Overlord']
-        myoverlord = myoverlord[0]
+        myoverlords = [u for u in self.me.units if u.type.name == 'Zerg Overlord']
+        myoverlord = myoverlords[0]
         myoverlord.move(self.enemy_position)
-        
+
         # Get all minerals on the map
         self.minerals = list(self.game.minerals)
         self.mineral_queue = []
         for mineral in self.minerals:
             distance_to_center = mineral.position.getDistance( self.Hatchery.position )
             # Only queue workers to get minerals next to the main base
-            if distance_to_center < 250:                 
+            if distance_to_center < 250:
                 self.mineral_queue.append(( distance_to_center, mineral ))
-        self.mineral_queue.sort() 
+        self.mineral_queue.sort()
         self.StrategyStep = 0
-    
-    def Minning(self, worker):        
+
+    def Minning(self, worker):
         #self.game.printf("go minning")
         mineral = self.mineral_queue.pop(0)
         worker.rightClick( mineral[1] )
         self.mineral_queue.append( mineral )
-    
+
     def onMatchFrame(self):
         frame_count = self.game.frameCount
         #self.game.printf("frame_count" + str(frame_count))
@@ -81,7 +81,7 @@ class zerg_FastBreakAI(object):
             pass
         except TypeError:
             self.game.pauseGame()
-        
+
         if self.game.isReplay or self.race.name != 'Zerg':
             return
         if self.StrategyStep == 0 and self.me.minerals >= 200:
@@ -90,11 +90,11 @@ class zerg_FastBreakAI(object):
             builder = MyWorkers[0]
             self.buildSpawningPool(builder)
             return
-        
+
         if self.StrategyStep == 1 and self.me.minerals >= 50 and self.me.minerals < 200:
             self.Hatchery.train(Zerg_Drone)
             self.StrategyStep = 2
-        
+
         if self.StrategyStep == 2 and self.me.minerals >= 50:
             self.Hatchery.train(Zerg_Zergling)
         colG = Color(6)
@@ -104,21 +104,31 @@ class zerg_FastBreakAI(object):
         Rig = self.Hatchery.right
         self.game.drawBoxMap(Lef, Top, Rig, Bot, colG)
 
-        if len(self.drawUnits) > 0:
-            for drawing in self.drawUnits:
-                self.drawUnitCircle(drawing[0], drawing[1], drawing[2])
+        #if len(self.drawUnits) > 0:
+        #    for drawing in self.drawUnits:
+        #        self.drawUnitCircle(drawing[0], drawing[1], drawing[2])
+        my_attack_units = [u for u in self.game.self.units if u.type.canAttack]
+        for u in my_attack_units:
+            self.game.drawCircle(Map, u.getPosition().getX(), u.getPosition().getY(), u.type.seekRange,  Color(0,0,255))
+            self.game.drawCircle(Map, u.getPosition().getX(), u.getPosition().getY(), u.type.sightRange,  Color(127,0,127))
+            if u.type.groundWeapon != WeaponTypes_None:
+               self.game.drawCircle(Map, u.getPosition().getX(), u.getPosition().getY(), u.type.groundWeapon.minRange,  Color(255,0,255))
+               self.game.drawCircle(Map, u.getPosition().getX(), u.getPosition().getY(), u.type.groundWeapon.maxRange,  Color(255,0,255))
+            if u.type.airWeapon != WeaponTypes_None:
+               self.game.drawCircle(Map, u.getPosition().getX(), u.getPosition().getY(), u.type.airWeapon.minRange,  Color(255,128,0))
+               self.game.drawCircle(Map, u.getPosition().getX(), u.getPosition().getY(), u.type.airWeapon.maxRange,  Color(255,128,0))
 
     def onUnitCreate(self, unit):
         if unit.type.isWorker:
             #self.game.printf('creat a worker.')
             mineral = self.mineral_queue.pop(0)
             unit.rightClick( mineral[1] )
-            self.mineral_queue.append( mineral )             
+            self.mineral_queue.append( mineral )
         if unit.type.name == "Zerg Zergling":
             #self.game.printf('creat a zergling')
             unit.attack(self.enemy_position)
             self.drawUnits.append((unit, 16, 117))
-            
+
     def onUnitMorph(self, unit):
         if unit.type.isWorker:
             #self.game.printf('morph a worker.')
@@ -129,7 +139,7 @@ class zerg_FastBreakAI(object):
             attack_time = self.game.frameCount + self.wait_frame
             self.inactive_zerglings.append(( attack_time, unit ))
             self.drawUnits.append((unit, 16, 111))
-    
+
     def drawUnitCircle(self, unit, radius, colornum):
         x = unit.position.x
         y = unit.position.y
